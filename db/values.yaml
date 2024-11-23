@@ -1,0 +1,31 @@
+# Default values for database.
+replicaCount: 1
+
+image:
+  repository: postgres
+  pullPolicy: IfNotPresent
+  tag: "14"  # PostgreSQL version
+
+service:
+  type: ClusterIP
+  port: 5432
+
+resources: {}
+  # Uncomment and define resources as needed:
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: ""  # Use appropriate storage class for your cluster
+
+env:
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: password
+  POSTGRES_DB: devdb
+

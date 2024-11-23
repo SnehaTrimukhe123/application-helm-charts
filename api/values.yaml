@@ -1,0 +1,125 @@
+# Default values for api.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2  # Number of replicas for high availability.
+
+# Image configuration for API application.
+image:
+  repository: 162186035982.dkr.ecr.us-east-2.amazonaws.com/api-dev  # Replace for prod as necessary.
+  pullPolicy: IfNotPresent
+  tag: "latest"  # Use specific tags for better control.
+
+# Pull secrets for accessing private container registries.
+imagePullSecrets:
+  - name: ecr-secret  # Ensure this secret is created in your namespace.
+
+# Overrides for the chart's name and fullname.
+nameOverride: "api"
+fullnameOverride: "api-service"
+
+# Service account configuration.
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: "api-service-account"
+
+# Pod annotations and labels for organizational and monitoring purposes.
+podAnnotations: {}
+podLabels: {}
+
+# Security context for pods.
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 3000
+  fsGroup: 2000
+
+# Container security context.
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+
+# Service configuration for internal communication.
+service:
+  type: ClusterIP
+  port: 8080  # Adjust to match your application's port.
+
+# Ingress configuration for external access.
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: api.example.com  # Replace with your domain.
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: api-tls-secret
+      hosts:
+        - api.example.com
+
+# Resources requests and limits for API containers.
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "500m"
+  limits:
+    memory: "512Mi"
+    cpu: "1"
+
+# Database configuration for PostgreSQL.
+database:
+  type: "postgresql"
+  host: "database"  # Kubernetes service name for the database.
+  port: 5432
+  name: "devdb"
+  username: "devuser"
+  password: "securepassword"  # Use Kubernetes secrets to manage passwords securely.
+  uri: "postgresql://devuser:securepassword@database:5432/devdb"
+
+# Liveness and readiness probes.
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 3
+
+# Autoscaling configuration for the API deployment.
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 80
+
+# Additional volumes and mounts if required.
+volumes:
+  - name: api-config
+    configMap:
+      name: api-config
+volumeMounts:
+  - name: api-config
+    mountPath: /app/config
+
+# Node scheduling constraints.
+nodeSelector: {}
+
+# Tolerations for tolerating taints on nodes.
+tolerations: []
+
+# Affinity rules for better pod placement.
+affinity: {}
+

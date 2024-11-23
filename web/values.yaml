@@ -1,0 +1,112 @@
+# Default values for web.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Number of replicas for the web application.
+replicaCount: 3  # Increased from 2 to 3 for better availability
+
+# Container image settings.
+image:
+  repository: 162186035982.dkr.ecr.us-east-2.amazonaws.com/web-dev  # Updated to match the specified ECR repository
+  pullPolicy: IfNotPresent
+  tag: "latest"  # Explicitly set to use the "latest" tag
+
+# Image pull secrets (if required for private repositories).
+imagePullSecrets:
+  - name: ecr-secret  # Replace with the actual Kubernetes secret name for ECR authentication
+
+# Overrides for naming the chart and resources.
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account configuration.
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+# Pod annotations and labels.
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "80"
+
+podLabels: {}
+
+# Pod security context.
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# Service configuration.
+service:
+  type: NodePort  # Changed from ClusterIP to NodePort for external access
+  port: 80
+  nodePort: 30080  # Added explicit NodePort for easier debugging
+
+# Ingress configuration for routing traffic.
+ingress:
+  enabled: true  # Enabled ingress for web application
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: web.dev.local  # Updated host for the web application
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: web-tls-secret  # Replace with your TLS secret name
+      hosts:
+        - web.dev.local
+
+# Resource requests and limits.
+resources:
+  requests:
+    cpu: 250m  # Set minimum CPU request
+    memory: 256Mi  # Set minimum memory request
+  limits:
+    cpu: 500m  # Set maximum CPU usage
+    memory: 512Mi  # Set maximum memory usage
+
+# Liveness and readiness probes.
+livenessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 10  # Added delay for container startup
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+# Autoscaling configuration.
+autoscaling:
+  enabled: true  # Enabled autoscaling
+  minReplicas: 3  # Minimum replicas set to 3
+  maxReplicas: 10  # Maximum replicas set to 10
+  targetCPUUtilizationPercentage: 70  # Adjusted threshold for autoscaling
+  # targetMemoryUtilizationPercentage: 80
+
+# Volumes and volume mounts (if required).
+volumes: []
+volumeMounts: []
+
+# Node selector, tolerations, and affinity for scheduling.
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
