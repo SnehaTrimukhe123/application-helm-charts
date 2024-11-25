@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: web-service
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/SnehaTrimukhe123/devsecops-assessment.git
+        revision: main
+        directories:
+          - path: /
+  template:
+    metadata:
+      name: web-app
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/SnehaTrimukhe123/devsecops-assessment.git
+        targetRevision: main
+        helm:
+          valueFiles:
+            - values.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: web
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
