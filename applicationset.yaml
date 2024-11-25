@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: devsecops-applicationset
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/SnehaTrimukhe123/devsecops-assessment.git
+        revision: develop
+        directories:
+          - path: api
+          - path: web
+          - path: db
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      annotations:
+        argocd-image-updater.argoproj.io/image-list: |
+          {{ if eq path.basename "web" }}
+            web-container=your-ecr-repo/web:*
+          {{ else if eq path.basename "api" }}
+            api-container=your-ecr-repo/api:*
+          {{ else if eq path.basename "db" }}
+            db-container=your-ecr-repo/db:*
+          {{ end }}
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/SnehaTrimukhe123/devsecops-assessment.git
+        targetRevision: develop
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
